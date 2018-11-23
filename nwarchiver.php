@@ -120,6 +120,6 @@ if(empty($_GET['save']) and empty($_GET['load'])) {
   <br>
   <a href="license.txt">Made by Ingan121
   <br>
-  Licensed under The MIT Licence</a>
+  Licensed under The MIT License</a>
 </footer>
 </html>
