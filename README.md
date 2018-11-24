@@ -1,5 +1,6 @@
 # NWArchiver
 [archive.is](https://archive.is)와 [archive.org](https://archive.org)가 전부 안먹히는 나무위키를 박제하기 위한 나무위키 박제기
+
 [샘플 (박제 불가능)](https://인간.kr/nwarchiver)
 
 설치법
