@@ -1,7 +1,8 @@
 # NWArchiver
 [archive.is](https://archive.is)와 [archive.org](https://archive.org)가 전부 안먹히는 나무위키를 박제하기 위한 나무위키 박제기
 
-##설치법
+설치법
+-----
 준비물: PHP와 MySQL이 설치된 웹서버
 1. 웹서버 폴더(/var/www/html 등)에 폴더를 하나 만든다. (폴더명은 nwarchiver 권장)
 2. index.php와 config.php를 받는다.
