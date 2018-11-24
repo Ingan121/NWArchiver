@@ -26,7 +26,7 @@ include 'config.php';
 <title>나무위키 박제기</title>
 <meta name="viewport" content="width=device-width">
 <meta charset="utf-8">
-<span style="float:right;"><a href="?sourcedl=1">소스 다운로드</a> <a href=".">목록 표시</a> <a href="..">인간.kr</a></span>
+<span style="float:right;"><a href="https://github.com/Ingan121/NWArchiver">GitHub</a> <a href=".">목록 표시</a> <a href="..">인간.kr</a></span>
 <h2 id="title">나무위키 박제기</h2>
 </head>
 <body>
