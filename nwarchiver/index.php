@@ -17,6 +17,9 @@ if($_GET['sourcedl'] == 1) {
   flush();
   readfile($filepath);
 }
+
+//설정 로드
+include 'config.php';
 ?>
 <html>
 <head>
@@ -27,22 +30,44 @@ if($_GET['sourcedl'] == 1) {
 <h2 id="title">나무위키 박제기</h2>
 </head>
 <body>
-<form name="form" action="" method="GET">
+<form name="archive" action="" method="GET">
   <p>https://namu.wiki/
-  <input type="docname" name="docname" placeholder="w/문서명" />
-  <button>박제</button></p>
+  <input type="text" name="docname" placeholder="w/문서명"<? if($disabled) echo ' disabled' ?> />
+  <button<? if($disabled) echo ' disabled' ?>>박제</button></p>
   <input type="hidden" name="save" value="1">
 </form>
+<form name="search" action="" method="GET">
+  <p><input type="text" name="search" placeholder="검색어" />
+  <button>검색</button>
+  <label><input type="checkbox" name="contain" />포함</label></p>
+</form>
 <?php
+//설정 파일 로드 여부 확인
+if(!$user and !$dbname and !$password) {
+  echo '❌설정 파일이 로드되지 않았습니다.<br>같은 경로에 config.php 파일이 있는지 확인해 주시기 바라며, 만약 없을 경우 <a href="https://github.com/Ingan121/NWArchiver/blob/master/nwarchiver/config.php">이곳</a>에서 config.php 파일을 받아 수정한 후 같은 경로에 업로드 해 주시기 바랍니다.<br>';
+}
+
 //DB 접속
-$user = 'ff330_Ingan121';  //MySQL 사용자명
-$dbname = 'ff330_Ingan121';  //MySQL DB명
-$password = '';  //MySQL 사용자 비밀번호
-include $_SERVER['DOCUMENT_ROOT'].'/password.php';  //일반적인 경우 이 라인 삭제
 $mysqli = new mysqli('localhost', $user, $password, $dbname);
 mysqli_query($mysqli, 'set names utf8mb4');
 if($mysqli->connect_error) {
   echo '❌오류: DB 접속 실패';
+}
+
+//nwarchiver 테이블이 존재하는지 확인하고 없으면 생성
+$result = $mysqli->query("SHOW TABLES LIKE 'nwarchiver'");
+$exist = ( $result->num_rows > 0 );
+if(!$exist) {
+  $sql = 'CREATE TABLE nwarchiver (
+    id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    url VARCHAR(2000) CHARACTER SET utf8mb4,
+    wikitext MEDIUMTEXT CHARACTER SET utf8mb4
+  )';
+  if (mysqli_query($mysqli, $sql)) {
+  echo ' ✔테이블 생성됨';
+  } else {
+  echo ' ❌테이블 생성 실패: ' . htmlspecialchars(mysqli_error($mysqli));
+  }
 }
 
 if($_GET['save']) {
@@ -95,6 +120,14 @@ if($_GET['save'] == '1' and $wikitext != '<h1') {
 if(empty($_GET['save']) and empty($_GET['load'])) {
   echo '<hr>';
   $sql = 'SELECT * FROM nwarchiver';
+  if($_GET['search']) {
+    $search = mysqli_real_escape_string($mysqli, str_replace('+', '%20', str_replace('%2F', '/', urlencode($_GET['search']))));
+    if($_GET['contain']) {
+      $sql = $sql . ' WHERE url LIKE "%' . $search . '%"';
+    } else {
+      $sql = $sql . ' WHERE url LIKE "' . $search . '"';
+    }
+  }
   $result = mysqli_query($mysqli, $sql);
   if (!$result) {
     echo '❌오류: ' . htmlspecialchars(mysqli_error($mysqli));
