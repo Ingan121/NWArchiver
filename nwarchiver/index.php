@@ -1,7 +1,7 @@
 <?php
 //소스 다운로드
-if($_GET['sourcedl'] == 1) {
-  $filepath = './index.php';
+if($_GET['sourcedl']) {
+  $filepath = './' . basename(__FILE__);
   $filesize = filesize($filepath);
   $path_parts = pathinfo($filepath);
   $filename = $path_parts['basename'];
