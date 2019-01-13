@@ -122,7 +122,7 @@ if($_POST['save']) {
 }
 
 //저장
-if($_POST['save'] == '1' and $wikitext == '<h1') {
+if($_POST['save'] == '1' and $wikitext != '<h1') {
   $sql = 'INSERT INTO nwarchiver (url, wikitext) VALUES ("' . mysqli_real_escape_string($mysqli, $url) . '","' . mysqli_real_escape_string($mysqli, $wikitext) . '")';
   if (mysqli_query($mysqli, $sql)) {
   echo ' ✔박제됨';
@@ -173,7 +173,7 @@ if(empty($_GET['save']) and empty($_GET['load'])) {
   <hr>
   각 페이지는 나무위키에서 퍼왔습니다.
   <br>
-  NWArchiver 2.0
+  NWArchiver 2.1
   <br>
   Made by Ingan121
   <br>
