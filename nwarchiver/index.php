@@ -44,6 +44,7 @@ include 'config.php';
       <button class="btn btn-primary"<? if($disabled) echo ' disabled' ?>>박제</button>
     </div>
   </div>
+  <? if($disabled) echo '<p>나무위키 측에서 본 서버가 페이지를 긁어가는 것을 차단하여 페이지를 새로 박제할 수 없습니다.</p>' ?>
   <input type="hidden" name="save" value="1">
 </form>
 <form name="search" action="" method="GET">
@@ -173,7 +174,7 @@ if(empty($_GET['save']) and empty($_GET['load'])) {
   <hr>
   각 페이지는 나무위키에서 퍼왔습니다.
   <br>
-  NWArchiver 2.1
+  NWArchiver 2.2
   <br>
   Made by Ingan121
   <br>
