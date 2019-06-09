@@ -1,6 +1,8 @@
 <?php
+error_reporting(0);
+
 //소스 다운로드
-if($_GET['sourcedl']) {
+if(isset($_GET['sourcedl'])) {
   $filepath = './' . basename(__FILE__);
   $filesize = filesize($filepath);
   $path_parts = pathinfo($filepath);
@@ -27,37 +29,48 @@ include 'config.php';
 <title><?=$siteName?> 박제기</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta charset="utf-8">
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> 
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="style.css" >
+<?php if($useRC) { ?>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script>
+  function onSubmit(token) {
+    document.getElementsByName("archive")[0].submit();
+  }
+</script>
+<?php } ?>
+</head>
+
 <span style="float:right;"><a href="https://github.com/Ingan121/NWArchiver">GitHub</a> <a href=".">목록 표시</a> <a href="https://인간.kr/">인간.kr</a></span>
 <h2 id="title"><?=$siteName?> 박제기</h2>
-</head>
+
 <body style="margin:10px;">
 <form name="archive" action="" method="POST">
-  <div class="form-row" style="margin-bottom:15px;">
+  <div class="form-row" style="width: 60%; min-width: 390px; margin: 0 auto;<? if(!$disabled) echo ' margin-bottom: 15px;' ?>">
     <div class="col-auto" style="display:flex; align-items:center;">
       <?=$rootDomain?>
     </div>
-    <div class="col-5">
+    <div class="col">
       <input type="text" class="form-control" name="docname" placeholder="w/문서명"<? if($disabled) echo ' disabled' ?> />
     </div>
     <div class="col-auto">
-      <button class="btn btn-primary"<? if($disabled) echo ' disabled' ?>>박제</button>
+      <button class="btn btn-primary<? if($useRC and !$disabled) echo ' g-recaptcha' ?>" data-sitekey="<?=$RCSiteKey?>" data-callback='onSubmit'<? if($disabled) echo ' disabled' ?>>박제</button>
     </div>
   </div>
-  <? if($disabled) echo '<p>나무위키 측에서 본 서버가 페이지를 긁어가는 것을 차단하여 페이지를 새로 박제할 수 없습니다.</p>' ?>
+  <? if($disabled) echo '<p style="margin-top: 15px; margin-left: 5px; text-align: center;">나무위키 측에서 본 서버가 페이지를 긁어가는 것을 차단하여 페이지를 새로 박제할 수 없습니다.</p>' ?>
   <input type="hidden" name="save" value="1">
 </form>
 <form name="search" action="" method="GET">
-  <div class="form-row" style="margin-bottom:-10px;">
-    <div class="col-8">
-      <p><input type="text" class="form-control" name="search" placeholder="검색어" /></p>
+  <div class="form-row" style="width:60%; min-width: 390px; margin-bottom:-10px; margin-left:auto; margin-right:auto;">
+    <div class="col">
+      <p><input type="text" class="form-control" name="search" placeholder="검색어" value="<?php if(isset($_GET['search'])) echo $_GET['search'] ?>" /></p>
     </div>
     <div class="col-auto">
       <p><button class="btn btn-primary">검색</button></p>
     </div>
     <div class="custom-control custom-checkbox" style="margin-left:4px; margin-top:5.5px;">
-      <input type="checkbox" class="custom-control-input" name="contain" id="contain" />
-      <label class="custom-control-label" for="contain">포함</label>
+      <input type="checkbox" class="custom-control-input" name="match" id="match" value=""<?php if(isset($_GET['match'])) echo ' checked' ?>/>
+      <label class="custom-control-label" for="match">정확한 일치</label>
     </div>
   </div>
 </form>
@@ -90,7 +103,19 @@ if(!$exist) {
   }
 }
 
-if($_POST['save']) {
+//reCAPTCHA 체크
+if(isset($_POST['g-recaptcha-response'])){
+  $captcha=$_POST['g-recaptcha-response'];
+}
+$response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=".$RCSecretKey."&response=".$captcha."&remoteip=".$_SERVER['REMOTE_ADDR']);
+$responseKeys = json_decode($response, true);
+if(intval($responseKeys["success"]) !== 1 and $useRC) {
+  $verified = false;
+} else {
+  $verified = true;
+}
+
+if(isset($_POST['save'])) {
   //특정 문자열 사이의 문자열 가져오는 함수
   function get_string_between($string, $start, $end) {
   $string = ' ' . $string;
@@ -109,13 +134,17 @@ if($_POST['save']) {
   $wikitext = preg_replace($regex, '[이미지]', $wikitext);
   $wikitext = str_replace('/w/', 'https://namu.wiki/w/', $wikitext);
   $wikitext = str_replace($_SERVER['SERVER_ADDR'], '0.0.0.0', $wikitext);
-} elseif($_GET['load']) {
+} elseif(isset($_GET['load'])) {
   //저장된 페이지 불러오기
   $sql = 'SELECT * FROM nwarchiver WHERE id = ' . $_GET['load'];
   $result = mysqli_query($mysqli, $sql);
-  if ($result) {
+  if($result) {
     $archivelist = mysqli_fetch_array($result);
-    echo '<a href="' . $archivelist['url'] . '">원본 페이지 보기</a><br><hr>';
+    echo '<a href="' . $archivelist['url'] . '">원본 페이지 보기</a>';
+    if(isset($_GET['archived'])) {
+      echo ' ✔박제됨';
+    }
+    echo '<br><hr>';
     echo $archivelist['wikitext'];
   } else {
     echo '❌오류: ' . htmlspecialchars(mysqli_error($mysqli));
@@ -123,26 +152,33 @@ if($_POST['save']) {
 }
 
 //저장
-if($_POST['save'] == '1' and $wikitext != '<h1') {
-  $sql = 'INSERT INTO nwarchiver (url, wikitext) VALUES ("' . mysqli_real_escape_string($mysqli, $url) . '","' . mysqli_real_escape_string($mysqli, $wikitext) . '")';
-  if (mysqli_query($mysqli, $sql)) {
-  echo ' ✔박제됨';
-  } else {
-  echo ' ❌오류: ' . htmlspecialchars(mysqli_error($mysqli));
+if(isset($_POST['save'])) {
+  if($wikitext != '<h1' and !$disabled and $verified) {
+    $sql = 'INSERT INTO nwarchiver (url, wikitext) VALUES ("' . mysqli_real_escape_string($mysqli, $url) . '","' . mysqli_real_escape_string($mysqli, $wikitext) . '")';
+    if (mysqli_query($mysqli, $sql)) {
+    echo ' ✔박제됨';
+    echo '<meta http-equiv="refresh" content="0; url=?load=' . $mysqli->insert_id . '&archived">';
+    } else {
+    echo ' ❌오류: ' . htmlspecialchars(mysqli_error($mysqli));
+    }
+    echo '<br><hr>' . $wikitext;
+  } else if($wikitext == '<h1') {
+    echo ' ❌오류: 불러올 수 없는 페이지';
+    echo $html;
+  } else if($disabled) {
+    echo ' ❌오류: 신규 박제가 비활성 상태입니다.';
+  } else if(!$verified) {
+    echo ' ❌오류: reCAPTCHA 검증을 통과하지 못했습니다.';
   }
-  echo '<br><hr>' . $wikitext;
-} else if($wikitext == '<h1') {
-  echo ' ❌오류: 불러올 수 없는 페이지';
-  echo $html;
 }
 
 //목록 불러오기
-if(empty($_GET['save']) and empty($_GET['load'])) {
+if(empty($_POST['save']) and empty($_GET['load'])) {
   echo '<hr>';
   $sql = 'SELECT * FROM nwarchiver';
-  if($_GET['search']) {
-    $search = mysqli_real_escape_string($mysqli, str_replace('+', '%20', str_replace('%2F', '/', urlencode($_GET['search']))));
-    if($_GET['contain']) {
+  if(isset($_GET['search'])) {
+    $search = mysqli_real_escape_string($mysqli, str_replace('%3A//', '://', str_replace('+', '%20', str_replace('%2F', '/', urlencode($_GET['search'])))));
+    if(!isset($_GET['match'])) {
       $sql = $sql . ' WHERE url LIKE "%' . $search . '%"';
     } else {
       $sql = $sql . ' WHERE url LIKE "' . $search . '"';
@@ -172,14 +208,11 @@ if(empty($_GET['save']) and empty($_GET['load'])) {
 </body>
 <footer style="text-align:center;">
   <hr>
-  각 페이지는 나무위키에서 퍼왔습니다.
+  각 페이지는 <a href="<?=$rootDomain?>"><?=$siteName?></a>에서 퍼왔습니다.
   <br>
-  NWArchiver 2.2
+  NWArchiver 2.3
   <br>
-  Made by Ingan121
+  <a href="license.txt">Made by Ingan121</a>
   <br>
-  <a href="license.txt">Licensed under The MIT License</a>
-  <br>
-  <a href="https://getbootstrap.com">Powered by Bootstrap</a>
 </footer>
 </html>
